@@ -4,6 +4,10 @@ import pandas as pd
 import joblib
 from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
+import os
+from dotenv import load_dotenv
+
+
 
 # ================================
 # 🔹 Load models
@@ -14,7 +18,7 @@ st.title("🧠 Big Five Personality Test (ML-powered)")
 @st.cache_resource
 def load_models():
     xgb = joblib.load("xgb_optuna.pkl")
-    mlp = load_model("mlp_tuning.h5")
+    mlp = load_model("mlp_tuning.keras")
     return xgb, mlp
 
 xgb_model, mlp_model = load_models()
@@ -24,72 +28,61 @@ xgb_model, mlp_model = load_models()
 # ================================
 questions = {
     "Extraversion (E)": [
-        "I am the life of the party.",
-        "I don't talk a lot.",
-        "I feel comfortable around people.",
-        "I keep in the background.",
-        "I start conversations.",
-        "I have little to say.",
-        "I talk to a lot of different people at parties.",
-        "I don't like to draw attention to myself.",
-        "I don't mind being the center of attention.",
-        "I am quiet around strangers."
+        "I am the life of the party.", "I don't talk a lot.", "I feel comfortable around people.",
+        "I keep in the background.", "I start conversations.", "I have little to say.",
+        "I talk to a lot of different people at parties.", "I don't like to draw attention to myself.",
+        "I don't mind being the center of attention.", "I am quiet around strangers."
     ],
     "Neuroticism (N)": [
-        "I get stressed out easily.",
-        "I am relaxed most of the time.",
-        "I worry about things.",
-        "I seldom feel blue.",
-        "I am easily disturbed.",
-        "I get upset easily.",
-        "I change my mood a lot.",
-        "I have frequent mood swings.",
-        "I get irritated easily.",
+        "I get stressed out easily.", "I am relaxed most of the time.", "I worry about things.",
+        "I seldom feel blue.", "I am easily disturbed.", "I get upset easily.",
+        "I change my mood a lot.", "I have frequent mood swings.", "I get irritated easily.",
         "I often feel blue."
     ],
     "Agreeableness (A)": [
-        "I feel little concern for others.",
-        "I am interested in people.",
-        "I insult people.",
-        "I sympathize with others' feelings.",
-        "I am not interested in other people's problems.",
-        "I have a soft heart.",
-        "I am not really interested in others.",
-        "I take time out for others.",
-        "I feel others' emotions.",
-        "I make people feel at ease."
+        "I feel little concern for others.", "I am interested in people.", "I insult people.",
+        "I sympathize with others' feelings.", "I am not interested in other people's problems.",
+        "I have a soft heart.", "I am not really interested in others.", "I take time out for others.",
+        "I feel others' emotions.", "I make people feel at ease."
     ],
     "Conscientiousness (C)": [
-        "I am always prepared.",
-        "I leave my belongings around.",
-        "I pay attention to details.",
-        "I make a mess of things.",
-        "I get chores done right away.",
-        "I often forget to put things back in their proper place.",
-        "I like order.",
-        "I shirk my duties.",
-        "I follow a schedule.",
-        "I am exacting in my work."
+        "I am always prepared.", "I leave my belongings around.", "I pay attention to details.",
+        "I make a mess of things.", "I get chores done right away.", "I often forget to put things back in their proper place.",
+        "I like order.", "I shirk my duties.", "I follow a schedule.", "I am exacting in my work."
     ],
     "Openness (O)": [
-        "I have a rich vocabulary.",
-        "I have difficulty understanding abstract ideas.",
-        "I have a vivid imagination.",
-        "I am not interested in abstract ideas.",
-        "I have excellent ideas.",
-        "I do not have a good imagination.",
-        "I am quick to understand things.",
-        "I use difficult words.",
-        "I spend time reflecting on things.",
+        "I have a rich vocabulary.", "I have difficulty understanding abstract ideas.", "I have a vivid imagination.",
+        "I am not interested in abstract ideas.", "I have excellent ideas.", "I do not have a good imagination.",
+        "I am quick to understand things.", "I use difficult words.", "I spend time reflecting on things.",
         "I am full of ideas."
     ]
 }
 
 # ================================
-# 🔹 Interactive questionnaire
+# 🔹 Descriptions for each predicted label
+# ================================
+label_descriptions = {
+    "Reserved": "🟦 **Reserved** – You tend to be introspective and careful in your actions. You value your personal space and are not easily swayed by external chaos. You might be seen as calm, observant, and self-contained.",
+    "Striver": "🔴 **Striver** – You aim high and push yourself to achieve more. With your high energy, ambition, and confidence, you often stand out in group settings. You thrive when facing challenges and pursuing your goals.",
+    "Internalizer": "🟠 **Internalizer** – You may experience emotions deeply and often reflect inward. You are thoughtful, sensitive, and may prefer to work through things on your own. Despite challenges, this introspection can make you very self-aware.",
+    "Balanced": "🟢 **Balanced** – You maintain emotional stability and handle life with a calm, adaptable approach. You’re neither overly introverted nor extroverted, and people likely see you as reliable and grounded."
+}
+
+# ================================
+# 🔹 Disclaimer
 # ================================
 st.markdown("### 📋 Please answer the 50 questions (1 = Strongly Disagree, 5 = Strongly Agree)")
+st.markdown("""
+**Disclaimer:** This test is **not an objective psychological assessment**.  
+It estimates the **most likely inclination** toward one of four categories:
+**Reserved**, **Striver**, **Internalizer**, and **Balanced**.  
+These categories were derived via **GMM clustering** and labeled manually based on cluster centroids.
+The categorization was done using a soft voting based approach using two ML algorithms (XGB and MLP)
+""")
 
+# ================================
+# 🔹 Interactive questionnaire
+# ================================
 responses = []
 for category, qs in questions.items():
     st.subheader(category)
@@ -118,6 +111,13 @@ def plot_radar(ocean_scores):
 # ================================
 # 🔹 Prediction
 # ================================
+# === Initialize variables to avoid NameError ===
+if "pred_cluster" not in st.session_state:
+    st.session_state.pred_cluster = None
+if "pred_label" not in st.session_state:
+    st.session_state.pred_label = None
+
+
 if st.button("🚀 Get Your Personality Profile"):
     X_input = np.array(responses, dtype=float).reshape(1, -1)
 
@@ -130,27 +130,33 @@ if st.button("🚀 Get Your Personality Profile"):
     final_prob = w_xgb * prob_xgb + w_mlp * prob_mlp
     pred_cluster = np.argmax(final_prob, axis=1)[0]
 
-    # Cluster labels
+    # Cluster labels mapping
     cluster_names = {0: "Reserved", 1: "Striver", 2: "Internalizer", 3: "Balanced"}
+    pred_label = cluster_names[pred_cluster]
 
-    # Calculate mean OCEAN scores (for radar chart)
+    st.session_state.pred_cluster = pred_cluster
+    st.session_state.pred_label = pred_label
+
+    # Compute OCEAN means for visualization
     O = np.mean(responses[40:50])
     C = np.mean(responses[30:40])
     E = np.mean(responses[0:10])
     A = np.mean(responses[20:30])
     N = np.mean(responses[10:20])
-    ocean_scores = np.array([O, C, E, A, N]) / 5  # normalize 0-1 for radar
+    ocean_scores = np.array([O, C, E, A, N]) / 5  # normalize for radar chart
 
-    # Display results
+    # === Display Results ===
     st.subheader("🎯 Your Predicted Profile")
-    st.success(f"**{cluster_names[pred_cluster]}**")
+    st.success(f"**{pred_label}**")
+    st.markdown(label_descriptions[pred_label])  # ✅ Add description here
 
-    # === Bar chart ===
+    # Probability bar chart with class names
     st.markdown("### 🔹 Class Probabilities")
-    cluster_names = {0: "Reserved", 1: "Striver", 2: "Internalizer", 3: "Balanced"}
     prob_df = pd.DataFrame([final_prob[0]], columns=[cluster_names[i] for i in range(final_prob.shape[1])])
-    st.bar_chart(prob_df.T)  # Transpose for better visualization
+    st.bar_chart(prob_df.T)
+    st.caption("ℹ️ *Note: Probabilities have been corrected to better handle edge cases.*")
 
+    # OCEAN Mean Scores
     st.markdown("### 📊 Your OCEAN Mean Scores")
     st.write({
         "Openness": round(O, 2),
@@ -160,5 +166,46 @@ if st.button("🚀 Get Your Personality Profile"):
         "Neuroticism": round(N, 2)
     })
 
+    # Radar Chart
     st.markdown("### 📊 Your OCEAN Trait Distribution")
     plot_radar(ocean_scores)
+
+    import os
+
+# === Optional demographic fields ===
+st.markdown("### 🧾 Optional Demographic Information")
+race = st.selectbox("Race (**1=Mixed Race**, **2=Arctic** (Siberian, Eskimo), **3=Caucasian** (European), **4=Caucasian** (Indian), **5=Caucasian** (Middle East), **6=Caucasian** (North African, Other), **7=Indigenous Australian**, **8=Native American**, **9=North East Asian** (Mongol, Tibetan, Korean Japanese, etc), **10=Pacific** (Polynesian, Micronesian, etc), **11=South East Asian** (Chinese, Thai, Malay, Filipino, etc), **12=West African, Bushmen, Ethiopian**, **13=Other** (**0=missed**))",[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], index=0)
+age = st.number_input("Age", min_value=14, max_value=100, value=30)
+engnat = st.selectbox("English Native (0= missed, 1=yes, 2=no)", [0, 1, 2], index=0)
+gender = st.selectbox("Gender (0=Unknown, 1=male, 2=female, 3=other", [0, 1, 2, 3], index=0)
+hand = st.selectbox("Hand (0=missed, 1=right, 2=left, 3=both", [0, 1, 2, 3], index=0)
+country = st.text_input("Country", value="IT")
+
+# === Save user data only if prediction was made ===
+if st.button("💾 Save Your Results"):
+    if st.session_state.pred_cluster is None:
+        st.error("⚠️ Please get your personality profile first before saving.")
+    else:
+        index_val = np.random.randint(100000, 999999)
+        meta = [index_val, race, age, engnat, gender, hand, "webapp", country]
+        row = meta + responses + [st.session_state.pred_cluster, st.session_state.pred_label]
+
+        columns = ["index","race","age","engnat","gender","hand","source","country"] + \
+                  [f"E{i}" for i in range(1,11)] + \
+                  [f"N{i}" for i in range(1,11)] + \
+                  [f"A{i}" for i in range(1,11)] + \
+                  [f"C{i}" for i in range(1,11)] + \
+                  [f"O{i}" for i in range(1,11)] + \
+                  ["Cluster","Psych_Label"]
+
+        new_entry = pd.DataFrame([row], columns=columns)
+    
+        load_dotenv()
+        save_path = os.getenv("SAVE_PATH")
+
+        if os.path.exists(save_path):
+            new_entry.to_csv(save_path, mode='a', header=False, index=False)
+        else:
+            new_entry.to_csv(save_path, index=False)
+
+        st.success("✅ Your answers have been successfully saved!")

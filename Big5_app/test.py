@@ -11,7 +11,7 @@ st.title("🧠 Big Five Personality Test with ML Prediction")
 @st.cache_resource
 def load_models():
     xgb = joblib.load("xgb_optuna.pkl")
-    mlp = load_model("mlp_tuning.h5")
+    mlp = load_model("mlp_tuning.keras")
     return xgb, mlp
 
 xgb_model, mlp_model = load_models()

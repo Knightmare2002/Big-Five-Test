@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score, f1_score, classification_report, con
 # ================================
 print("🔹 Loading optimized models...")
 xgb_model = joblib.load("xgb_optuna.pkl")
-mlp_model = load_model("mlp_tuning.h5")
+mlp_model = load_model("mlp_tuning.keras")
 
 # ================================
 # 🔹 2. Load Data 
