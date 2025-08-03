@@ -201,7 +201,7 @@ if st.button("💾 Save Your Results"):
         new_entry = pd.DataFrame([row], columns=columns)
     
         load_dotenv()
-        save_path = st.secrets.get("SAVE_PATH", os.getenv("SAVE_PATH", "user_big5_responses.csv"))
+        save_path = st.secrets.get(SAVE_PATH, os.getenv(SAVE_PATH, "user_big5_responses.csv"))
 
 
         if os.path.exists(save_path):
