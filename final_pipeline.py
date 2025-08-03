@@ -53,9 +53,9 @@ print(classification_report(y_test, y_pred_ensemble))
 # ================================
 print("🔹 Plotting confusion matrix...")
 cluster_names = {
-    0: "Rebels",
-    1: "Leaders",
-    2: "Anxious",
+    0: "Reserved",
+    1: "Striver",
+    2: "Internalizer",
     3: "Balanced"
 }
 
