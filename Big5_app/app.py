@@ -210,6 +210,8 @@ country = st.text_input("Country", value="IT")
 # 🔹 Save to Google Sheets or Local CSV
 # ================================
 if st.button("💾 Save Your Results", key="save_button"):
+    st.write("DEBUG GSHEET_ID:", st.secrets.get("GSHEET_ID", "NOT FOUND!!"))#DEBUG
+
     if st.session_state.pred_cluster is None:
         st.error("⚠️ Please generate your profile first!")
     else:
@@ -228,8 +230,6 @@ if st.button("💾 Save Your Results", key="save_button"):
         if client:
             try:
                 sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
-
-                st.write("DEBUG GSHEET_ID:", st.secrets.get("GSHEET_ID", "NOT FOUND!!"))#DEBUG
 
                 if len(sheet.get_all_values()) == 0:
                     sheet.append_row(columns)
