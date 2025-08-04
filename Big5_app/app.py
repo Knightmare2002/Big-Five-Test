@@ -6,8 +6,9 @@ from tensorflow.keras.models import load_model
 import matplotlib.pyplot as plt
 import os
 from dotenv import load_dotenv
-
-
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
 
 # ================================
 # 🔹 Load models
@@ -22,6 +23,26 @@ def load_models():
     return xgb, mlp
 
 xgb_model, mlp_model = load_models()
+
+# ================================
+# 🔹 Connect to Google Sheets (if online)
+# ================================
+def get_gsheet_client():
+    try:
+         #Reads the credential of streamlit secrets
+        creds_dict = st.secrets["gcp_service_account"]
+
+        #Transfrom the credentials in an authentification object
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scopes=[
+            "https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"
+        ]) 
+
+        #Creation of the client which has the authorization to write on the Google sheet
+        client = gspread.authorize(creds)
+
+        return client
+    except Exception:
+        return None
 
 # ================================
 # 🔹 Big Five questions grouped by category
@@ -63,8 +84,11 @@ questions = {
 # ================================
 label_descriptions = {
     "Reserved": "🟦 **Reserved** – You tend to be introspective and careful in your actions. You value your personal space and are not easily swayed by external chaos. You might be seen as calm, observant, and self-contained.",
+
     "Striver": "🔴 **Striver** – You aim high and push yourself to achieve more. With your high energy, ambition, and confidence, you often stand out in group settings. You thrive when facing challenges and pursuing your goals.",
+
     "Internalizer": "🟠 **Internalizer** – You may experience emotions deeply and often reflect inward. You are thoughtful, sensitive, and may prefer to work through things on your own. Despite challenges, this introspection can make you very self-aware.",
+
     "Balanced": "🟢 **Balanced** – You maintain emotional stability and handle life with a calm, adaptable approach. You’re neither overly introverted nor extroverted, and people likely see you as reliable and grounded."
 }
 
@@ -201,12 +225,43 @@ if st.button("💾 Save Your Results"):
         new_entry = pd.DataFrame([row], columns=columns)
     
         load_dotenv()
-        save_path = st.secrets.get("SAVE_PATH", os.getenv("SAVE_PATH", "user_big5_responses.csv"))
+        save_path = os.getenv("SAVE_PATH", "user_big5_responses.csv") #Local deployment
 
+# ================================
+# 🔹 Save to Google Sheets or Local CSV
+# ================================
+if st.button("💾 Save Your Results"):
+    if st.session_state.pred_cluster is None:
+        st.error("⚠️ Please generate your profile first!")
+    else:
+        index_val = np.random.randint(100000, 999999)
+        meta = [index_val, "unknown", 0, 0, 0, 0, "webapp", "unknown"]
+        row = meta + responses + [st.session_state.pred_cluster, st.session_state.pred_label]
 
-        if os.path.exists(save_path):
-            new_entry.to_csv(save_path, mode='a', header=False, index=False)
+        columns = ["index","race","age","engnat","gender","hand","source","country"] + \
+                  [f"E{i}" for i in range(1,11)] + [f"N{i}" for i in range(1,11)] + \
+                  [f"A{i}" for i in range(1,11)] + [f"C{i}" for i in range(1,11)] + \
+                  [f"O{i}" for i in range(1,11)] + ["Cluster","Psych_Label"]
+
+        df_entry = pd.DataFrame([row], columns=columns)
+
+        # ✅ Try Google Sheets first
+        client = get_gsheet_client()
+        if client:
+            try:
+                #Opens the sheet
+                sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
+
+                #If the sheet is empty adds the columns
+                if len(sheet.get_all_values()) == 0:
+                    sheet.append_row(columns)
+
+                #Adds a new row
+                sheet.append_row(row)
+                st.success("✅ Saved to Google Sheets!")
+            except Exception as e:
+                st.error(f"❌ Google Sheets error: {e}")
         else:
-            new_entry.to_csv(save_path, index=False)
-
-        st.success("✅ Your answers have been successfully saved!")
+            save_path = "user_big5_responses.csv"
+            df_entry.to_csv(save_path, mode='a', header=not os.path.exists(save_path), index=False)
+            st.success("✅ Saved locally (CSV)!")
