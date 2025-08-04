@@ -252,6 +252,11 @@ if st.button("💾 Save Your Results", key="save_button"):
                 sheet.append_row([str(x) for x in row])
                 st.success("✅ Data collected successfully")
 
+                new_values = sheet.get_all_values()
+                st.write("✅ DEBUG: Sheet now has rows:", len(new_values))
+                st.write("✅ DEBUG: Last row in sheet:", new_values[-1])
+
+
             except Exception as e:
                 st.error(f"❌ Google Sheets error: {e}")
         else:
