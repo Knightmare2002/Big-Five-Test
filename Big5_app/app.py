@@ -249,7 +249,9 @@ if st.button("💾 Save Your Results", key="save_button"):
                     st.write("✅ DEBUG: Header added successfully")
 
                 st.write("✅ DEBUG: Now adding user row:", row)
-                sheet.append_row([str(x) for x in row])
+                clean_row = [str(x) for x in row]
+                clean_row = clean_row[:len(columns)]
+                sheet.append_row(clean_row, value_input_option="RAW")
                 st.success("✅ Data collected successfully")
 
                 new_values = sheet.get_all_values()
