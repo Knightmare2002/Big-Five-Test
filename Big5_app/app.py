@@ -29,9 +29,9 @@ xgb_model, mlp_model = load_models()
 # ================================
 def get_gsheet_client():
     try:
-        st.write("🔍 DEBUG: Trying to read gcp_service_account from secrets...")
+        st.write("🔍 DEBUG: Trying to read gcp_service_account from secrets...") #DEBUG
         creds_dict = st.secrets["gcp_service_account"]
-        st.write("✅ DEBUG: Successfully read credentials keys:", list(creds_dict.keys()))
+        st.write("✅ DEBUG: Successfully read credentials keys:", list(creds_dict.keys())) #DEBUG
 
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scopes=[
             "https://spreadsheets.google.com/feeds",
@@ -39,7 +39,7 @@ def get_gsheet_client():
         ])
 
         client = gspread.authorize(creds)
-        st.write("✅ DEBUG: Google Sheets client authorized successfully")
+        st.write("✅ DEBUG: Google Sheets client authorized successfully") #DEBUG
         return client
     except Exception as e:
         st.error(f"❌ DEBUG: Failed to connect to Google Sheets: {e}")
@@ -229,8 +229,12 @@ if st.button("💾 Save Your Results", key="save_button"):
         if client:
             try:
                 sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
+
+                st.write("DEBUG GSHEET_ID:", st.secrets.get("GSHEET_ID", "NOT FOUND"))#DEBUG
+
                 if len(sheet.get_all_values()) == 0:
                     sheet.append_row(columns)
+
                 sheet.append_row([str(x) for x in row]) 
                 st.success("✅ Saved to Google Sheets!")
             except Exception as e:
