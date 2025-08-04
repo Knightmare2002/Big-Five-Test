@@ -120,7 +120,9 @@ The categorization was done using a soft voting based approach using two ML algo
 responses_by_trait = {"E": [], "N": [], "A": [], "C": [], "O": []}
 for i, (trait, q) in enumerate(question_list):
     score = st.selectbox(q, options=[1, 2, 3, 4, 5], index=2, key=f"Q{i}")
-    responses_by_trait[trait].append(score)
+    trait_key = trait[-2] if "(" in trait else trait  # estrae 'E' da "Extraversion (E)"
+    responses_by_trait[trait_key].append(score)
+
 
 # Rebuild responses in correct order for the model
 responses = responses_by_trait["E"] + responses_by_trait["N"] + \
