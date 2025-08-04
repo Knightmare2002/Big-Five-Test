@@ -184,7 +184,6 @@ if st.button("🚀 Get Your Personality Profile"):
     st.markdown("### 🔹 Class Probabilities")
     prob_df = pd.DataFrame([final_prob[0]], columns=[cluster_names[i] for i in range(final_prob.shape[1])])
     st.bar_chart(prob_df.T)
-    st.caption("ℹ️ *Note: Probabilities have been corrected to better handle edge cases.*")
 
     # OCEAN Mean Scores
     st.markdown("### 📊 Your OCEAN Mean Scores")
