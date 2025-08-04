@@ -85,6 +85,10 @@ questions = {
     ]
 }
 
+# Randomize order
+question_list = [(trait, q) for trait, qs in questions.items() for q in qs]
+np.random.shuffle(question_list)
+
 # ================================
 # 🔹 Descriptions for each predicted label
 # ================================
@@ -113,12 +117,15 @@ The categorization was done using a soft voting based approach using two ML algo
 # ================================
 # 🔹 Interactive questionnaire
 # ================================
-responses = []
-for category, qs in questions.items():
-    st.subheader(category)
-    for q in qs:
-        score = st.selectbox(f"{q}", options=[1, 2, 3, 4, 5], index=2, key=f"{category}_{q}")
-        responses.append(score)
+responses_by_trait = {"E": [], "N": [], "A": [], "C": [], "O": []}
+for i, (trait, q) in enumerate(question_list):
+    score = st.selectbox(q, options=[1, 2, 3, 4, 5], index=2, key=f"Q{i}")
+    responses_by_trait[trait].append(score)
+
+# Rebuild responses in correct order for the model
+responses = responses_by_trait["E"] + responses_by_trait["N"] + \
+            responses_by_trait["A"] + responses_by_trait["C"] + \
+            responses_by_trait["O"]
 
 # ================================
 # 🔹 Radar chart function
