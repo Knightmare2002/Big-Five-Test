@@ -232,14 +232,26 @@ if st.button("💾 Save Your Results", key="save_button"):
         client = get_gsheet_client()
         if client:
             try:
-                sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
+                st.write("✅ DEBUG: Google Sheets client created")
 
-                # 🔹 if sheet is empty
-                if len(sheet.get_all_values()) == 0:
+                sheet_id = st.secrets.get("GSHEET_ID", "NOT FOUND")
+                st.write("✅ DEBUG: GSHEET_ID =", sheet_id)
+
+                sheet = client.open_by_key(sheet_id).sheet1
+                st.write("✅ DEBUG: Successfully opened sheet")
+
+                current_values = sheet.get_all_values()
+                st.write(f"✅ DEBUG: Current sheet rows count: {len(current_values)}")
+
+                if len(current_values) == 0:
+                    st.write("✅ DEBUG: Sheet is empty, adding header...")
                     sheet.append_row([str(c) for c in columns])
+                    st.write("✅ DEBUG: Header added successfully")
 
+                st.write("✅ DEBUG: Now adding user row:", row)
                 sheet.append_row([str(x) for x in row])
-                st.success("✅ Saved to Google Sheets (headers added if needed)!")
+                st.success("✅ Data collected successfully")
+
             except Exception as e:
                 st.error(f"❌ Google Sheets error: {e}")
         else:
