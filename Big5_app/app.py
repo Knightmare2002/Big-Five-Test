@@ -85,9 +85,14 @@ questions = {
     ]
 }
 
-# Randomize order
-question_list = [(trait, q) for trait, qs in questions.items() for q in qs]
-np.random.shuffle(question_list)
+# Randomize order only once and store in session state
+if "randomized_questions" not in st.session_state:
+    question_list = [(trait, q) for trait, qs in questions.items() for q in qs]
+    np.random.shuffle(question_list)
+    st.session_state.randomized_questions = question_list
+else:
+    question_list = st.session_state.randomized_questions
+
 
 # ================================
 # 🔹 Descriptions for each predicted label
