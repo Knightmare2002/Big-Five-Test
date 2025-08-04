@@ -29,9 +29,11 @@ xgb_model, mlp_model = load_models()
 # ================================
 def get_gsheet_client():
     try:
-        st.write("🔍 DEBUG: Trying to read gcp_service_account from secrets...") #DEBUG
+        #st.write("🔍 DEBUG: Trying to read gcp_service_account from secrets...") #DEBUG
+
         creds_dict = st.secrets["gcp_service_account"]
-        st.write("✅ DEBUG: Successfully read credentials keys:", list(creds_dict.keys())) #DEBUG
+
+        #st.write("✅ DEBUG: Successfully read credentials keys:", list(creds_dict.keys())) #DEBUG
 
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scopes=[
             "https://spreadsheets.google.com/feeds",
@@ -39,7 +41,9 @@ def get_gsheet_client():
         ])
 
         client = gspread.authorize(creds)
-        st.write("✅ DEBUG: Google Sheets client authorized successfully") #DEBUG
+
+        #st.write("✅ DEBUG: Google Sheets client authorized successfully") #DEBUG
+
         return client
     except Exception as e:
         st.error(f"❌ DEBUG: Failed to connect to Google Sheets: {e}")
@@ -207,11 +211,9 @@ hand = st.selectbox("Hand (0=missed, 1=right, 2=left, 3=both", [0, 1, 2, 3], ind
 country = st.text_input("Country", value="IT")
 
 # ================================
-# 🔹 Save to Google Sheets or Local CSV
+# 🔹 Save to Google Sheets or Local CSV (with header if empty)
 # ================================
 if st.button("💾 Save Your Results", key="save_button"):
-    st.write("DEBUG GSHEET_ID:", st.secrets.get("GSHEET_ID", "NOT FOUND!!"))#DEBUG
-
     if st.session_state.pred_cluster is None:
         st.error("⚠️ Please generate your profile first!")
     else:
@@ -226,19 +228,27 @@ if st.button("💾 Save Your Results", key="save_button"):
 
         df_entry = pd.DataFrame([row], columns=columns)
 
+        # ✅ Try Google Sheets first
         client = get_gsheet_client()
         if client:
             try:
                 sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
 
-                if len(sheet.get_all_values()) == 0:
+                # 🔹 Check if the sheet is empty
+                existing_data = sheet.get_all_values()
+                if len(existing_data) == 0:
+                    # Write header first
                     sheet.append_row(columns)
 
-                sheet.append_row([str(x) for x in row]) 
-                st.success("✅ Saved to Google Sheets!")
+                # Then write the actual data row
+                sheet.append_row([str(x) for x in row])
+                st.success("✅ Saved to Google Sheets (with headers if new)!")
             except Exception as e:
                 st.error(f"❌ Google Sheets error: {e}")
         else:
+            # ✅ Local save with header check
             save_path = "user_big5_responses.csv"
-            df_entry.to_csv(save_path, mode='a', header=not os.path.exists(save_path), index=False)
-            st.success("✅ Saved locally (CSV)!")
+            write_header = not os.path.exists(save_path) or os.path.getsize(save_path) == 0
+            df_entry.to_csv(save_path, mode='a', header=write_header, index=False)
+            st.success("✅ Saved locally (CSV with headers if new)!")
+
