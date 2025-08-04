@@ -205,28 +205,6 @@ gender = st.selectbox("Gender (0=Unknown, 1=male, 2=female, 3=other", [0, 1, 2, 
 hand = st.selectbox("Hand (0=missed, 1=right, 2=left, 3=both", [0, 1, 2, 3], index=0)
 country = st.text_input("Country", value="IT")
 
-# === Save user data only if prediction was made ===
-if st.button("💾 Save Your Results"):
-    if st.session_state.pred_cluster is None:
-        st.error("⚠️ Please get your personality profile first before saving.")
-    else:
-        index_val = np.random.randint(100000, 999999)
-        meta = [index_val, race, age, engnat, gender, hand, "webapp", country]
-        row = meta + responses + [st.session_state.pred_cluster, st.session_state.pred_label]
-
-        columns = ["index","race","age","engnat","gender","hand","source","country"] + \
-                  [f"E{i}" for i in range(1,11)] + \
-                  [f"N{i}" for i in range(1,11)] + \
-                  [f"A{i}" for i in range(1,11)] + \
-                  [f"C{i}" for i in range(1,11)] + \
-                  [f"O{i}" for i in range(1,11)] + \
-                  ["Cluster","Psych_Label"]
-
-        new_entry = pd.DataFrame([row], columns=columns)
-    
-        load_dotenv()
-        save_path = os.getenv("SAVE_PATH", "user_big5_responses.csv") #Local deployment
-
 # ================================
 # 🔹 Save to Google Sheets or Local CSV
 # ================================
@@ -250,7 +228,7 @@ if st.button("💾 Save Your Results"):
         if client:
             try:
                 #Opens the sheet
-                sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
+                sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1 #Select the first sheet
 
                 #If the sheet is empty adds the columns
                 if len(sheet.get_all_values()) == 0:
