@@ -196,7 +196,6 @@ if st.button("🚀 Get Your Personality Profile"):
     st.markdown("### 📊 Your OCEAN Trait Distribution")
     plot_radar(ocean_scores)
 
-    import os
 
 # === Optional demographic fields ===
 st.markdown("### 🧾 Optional Demographic Information")
@@ -230,7 +229,7 @@ if st.button("💾 Save Your Results", key="save_button"):
             try:
                 sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
 
-                st.write("DEBUG GSHEET_ID:", st.secrets.get("GSHEET_ID", "NOT FOUND"))#DEBUG
+                st.write("DEBUG GSHEET_ID:", st.secrets.get("GSHEET_ID", "NOT FOUND!!"))#DEBUG
 
                 if len(sheet.get_all_values()) == 0:
                     sheet.append_row(columns)
