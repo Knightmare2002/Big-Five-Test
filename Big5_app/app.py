@@ -208,12 +208,12 @@ country = st.text_input("Country", value="IT")
 # ================================
 # 🔹 Save to Google Sheets or Local CSV
 # ================================
-if st.button("💾 Save Your Results"):
+if st.button("💾 Save Your Results", key="save_button"):
     if st.session_state.pred_cluster is None:
         st.error("⚠️ Please generate your profile first!")
     else:
         index_val = np.random.randint(100000, 999999)
-        meta = [index_val, "unknown", 0, 0, 0, 0, "webapp", "unknown"]
+        meta = [index_val, race, age, engnat, gender, hand, "webapp", country]
         row = meta + responses + [st.session_state.pred_cluster, st.session_state.pred_label]
 
         columns = ["index","race","age","engnat","gender","hand","source","country"] + \
@@ -223,19 +223,13 @@ if st.button("💾 Save Your Results"):
 
         df_entry = pd.DataFrame([row], columns=columns)
 
-        # ✅ Try Google Sheets first
         client = get_gsheet_client()
         if client:
             try:
-                #Opens the sheet
-                sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1 #Select the first sheet
-
-                #If the sheet is empty adds the columns
+                sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
                 if len(sheet.get_all_values()) == 0:
                     sheet.append_row(columns)
-
-                #Adds a new row
-                sheet.append_row(row)
+                sheet.append_row([str(x) for x in row])  # ✅ Converti tutto in stringhe
                 st.success("✅ Saved to Google Sheets!")
             except Exception as e:
                 st.error(f"❌ Google Sheets error: {e}")
