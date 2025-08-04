@@ -232,31 +232,32 @@ if st.button("💾 Save Your Results", key="save_button"):
         client = get_gsheet_client()
         if client:
             try:
-                st.write("✅ DEBUG: Google Sheets client created")
+                
+                #st.write("✅ DEBUG: Google Sheets client created")
 
                 sheet_id = st.secrets.get("GSHEET_ID", "NOT FOUND")
-                st.write("✅ DEBUG: GSHEET_ID =", sheet_id)
+                #st.write("✅ DEBUG: GSHEET_ID =", sheet_id)
 
                 sheet = client.open_by_key(sheet_id).sheet1
-                st.write("✅ DEBUG: Successfully opened sheet")
+                #st.write("✅ DEBUG: Successfully opened sheet")
 
                 current_values = sheet.get_all_values()
-                st.write(f"✅ DEBUG: Current sheet rows count: {len(current_values)}")
+                #st.write(f"✅ DEBUG: Current sheet rows count: {len(current_values)}")
 
-                if len(current_values) < 50:
-                    st.write("✅ DEBUG: Sheet is empty, adding header...")
+                if len(current_values) == 0:
+                    #st.write("✅ DEBUG: Sheet is empty, adding header...")
                     sheet.append_row([str(c) for c in columns])
-                    st.write("✅ DEBUG: Header added successfully")
+                    #st.write("✅ DEBUG: Header added successfully")
 
-                st.write("✅ DEBUG: Now adding user row:", row)
+                #st.write("✅ DEBUG: Now adding user row:", row)
                 clean_row = [str(x) for x in row]
                 clean_row = clean_row[:len(columns)]
                 sheet.append_row(clean_row, value_input_option="RAW")
                 st.success("✅ Data collected successfully")
 
                 new_values = sheet.get_all_values()
-                st.write("✅ DEBUG: Sheet now has rows:", len(new_values))
-                st.write("✅ DEBUG: Last row in sheet:", new_values[-1])
+                #st.write("✅ DEBUG: Sheet now has rows:", len(new_values))
+                #st.write("✅ DEBUG: Last row in sheet:", new_values[-1])
 
 
             except Exception as e:
