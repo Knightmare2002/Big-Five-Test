@@ -234,21 +234,17 @@ if st.button("💾 Save Your Results", key="save_button"):
             try:
                 sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
 
-                # 🔹 Check if the sheet is empty
-                existing_data = sheet.get_all_values()
-                if len(existing_data) == 0:
-                    # Write header first
-                    sheet.append_row(columns)
+                # 🔹 if sheet is empty
+                if len(sheet.get_all_values()) == 0:
+                    sheet.append_row([str(c) for c in columns])
 
-                # Then write the actual data row
                 sheet.append_row([str(x) for x in row])
-                st.success("✅ Saved to Google Sheets (with headers if new)!")
+                st.success("✅ Saved to Google Sheets (headers added if needed)!")
             except Exception as e:
                 st.error(f"❌ Google Sheets error: {e}")
         else:
-            # ✅ Local save with header check
+            # ✅ Local CSV
             save_path = "user_big5_responses.csv"
             write_header = not os.path.exists(save_path) or os.path.getsize(save_path) == 0
             df_entry.to_csv(save_path, mode='a', header=write_header, index=False)
             st.success("✅ Saved locally (CSV with headers if new)!")
-
