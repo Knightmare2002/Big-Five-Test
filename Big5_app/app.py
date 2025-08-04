@@ -29,20 +29,22 @@ xgb_model, mlp_model = load_models()
 # ================================
 def get_gsheet_client():
     try:
-         #Reads the credential of streamlit secrets
+        st.write("🔍 DEBUG: Trying to read gcp_service_account from secrets...")
         creds_dict = st.secrets["gcp_service_account"]
+        st.write("✅ DEBUG: Successfully read credentials keys:", list(creds_dict.keys()))
 
-        #Transfrom the credentials in an authentification object
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scopes=[
-            "https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"
-        ]) 
+            "https://spreadsheets.google.com/feeds",
+            "https://www.googleapis.com/auth/drive"
+        ])
 
-        #Creation of the client which has the authorization to write on the Google sheet
         client = gspread.authorize(creds)
-
+        st.write("✅ DEBUG: Google Sheets client authorized successfully")
         return client
-    except Exception:
+    except Exception as e:
+        st.error(f"❌ DEBUG: Failed to connect to Google Sheets: {e}")
         return None
+
 
 # ================================
 # 🔹 Big Five questions grouped by category
@@ -229,7 +231,7 @@ if st.button("💾 Save Your Results", key="save_button"):
                 sheet = client.open_by_key(st.secrets["GSHEET_ID"]).sheet1
                 if len(sheet.get_all_values()) == 0:
                     sheet.append_row(columns)
-                sheet.append_row([str(x) for x in row])  # ✅ Converti tutto in stringhe
+                sheet.append_row([str(x) for x in row]) 
                 st.success("✅ Saved to Google Sheets!")
             except Exception as e:
                 st.error(f"❌ Google Sheets error: {e}")
