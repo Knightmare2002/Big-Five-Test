@@ -243,7 +243,7 @@ if st.button("💾 Save Your Results", key="save_button"):
                 current_values = sheet.get_all_values()
                 st.write(f"✅ DEBUG: Current sheet rows count: {len(current_values)}")
 
-                if len(current_values) == 0:
+                if len(current_values) < 50:
                     st.write("✅ DEBUG: Sheet is empty, adding header...")
                     sheet.append_row([str(c) for c in columns])
                     st.write("✅ DEBUG: Header added successfully")
